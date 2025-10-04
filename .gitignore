@@ -1,0 +1,40 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Data directories (persistent volumes)
+prometheus_data/
+grafana_data/
+alertmanager_data/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# Backup files
+backups/
+*.backup
+*.bak
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# Node modules (for npm-exporter development)
+exporters/npm-exporter/node_modules/
+exporters/npm-exporter/package-lock.json

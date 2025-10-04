@@ -1,0 +1,90 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alertmanager@example.com'
+  smtp_auth_username: 'alerts@example.com'
+  smtp_auth_password: 'your-password'
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default-receiver'
+
+  routes:
+    # Critical alerts
+    - match:
+        severity: critical
+      receiver: 'critical-receiver'
+      group_wait: 10s
+      repeat_interval: 5m
+
+    # Warning alerts
+    - match:
+        severity: warning
+      receiver: 'warning-receiver'
+      group_wait: 30s
+      repeat_interval: 30m
+
+    # Infrastructure alerts
+    - match:
+        component: infrastructure
+      receiver: 'infrastructure-receiver'
+
+    # Application alerts
+    - match:
+        component: application
+      receiver: 'application-receiver'
+
+# Receivers configuration
+receivers:
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'team@example.com'
+        headers:
+          Subject: '[Monitoring] Alert: {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+
+  - name: 'critical-receiver'
+    email_configs:
+      - to: 'oncall@example.com'
+        headers:
+          Subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+    # Uncomment for Slack integration
+    # slack_configs:
+    #   - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+    #     channel: '#alerts-critical'
+    #     title: 'Critical Alert: {{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  - name: 'warning-receiver'
+    email_configs:
+      - to: 'team@example.com'
+        headers:
+          Subject: '[WARNING] {{ .GroupLabels.alertname }}'
+
+  - name: 'infrastructure-receiver'
+    email_configs:
+      - to: 'infrastructure@example.com'
+        headers:
+          Subject: '[Infrastructure] {{ .GroupLabels.alertname }}'
+
+  - name: 'application-receiver'
+    email_configs:
+      - to: 'developers@example.com'
+        headers:
+          Subject: '[Application] {{ .GroupLabels.alertname }}'
+
+# Inhibition rules
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
