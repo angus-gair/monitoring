@@ -12,6 +12,48 @@ const register = new client.Registry();
 // Add default metrics (memory, CPU, etc.)
 client.collectDefaultMetrics({ register });
 
+// HTTP request metrics
+const httpRequestDuration = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'status'],
+  buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5],
+  registers: [register]
+});
+
+const httpRequestsTotal = new client.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status'],
+  registers: [register]
+});
+
+const httpConnectionsActive = new client.Gauge({
+  name: 'http_connections_active',
+  help: 'Number of active HTTP connections',
+  registers: [register]
+});
+
+const httpConnectionsIdle = new client.Gauge({
+  name: 'http_connections_idle',
+  help: 'Number of idle HTTP connections',
+  registers: [register]
+});
+
+const applicationErrorsTotal = new client.Counter({
+  name: 'application_errors_total',
+  help: 'Total number of application errors',
+  labelNames: ['type'],
+  registers: [register]
+});
+
+const serviceHealthCheck = new client.Gauge({
+  name: 'service_health_check',
+  help: 'Health check status (1 = healthy, 0 = unhealthy)',
+  labelNames: ['endpoint'],
+  registers: [register]
+});
+
 // Custom metrics for NPM processes
 const npmProcessCount = new client.Gauge({
   name: 'npm_process_count',
@@ -149,6 +191,40 @@ setInterval(updateMetrics, 10000);
 // Initial metric update
 updateMetrics();
 
+// Middleware to track HTTP requests
+app.use((req, res, next) => {
+  const start = Date.now();
+
+  // Track active connections
+  httpConnectionsActive.inc();
+
+  res.on('finish', () => {
+    const duration = (Date.now() - start) / 1000;
+    const route = req.route ? req.route.path : req.path;
+    const method = req.method;
+    const status = res.statusCode;
+
+    // Record metrics
+    httpRequestDuration.observe({ method, route, status }, duration);
+    httpRequestsTotal.inc({ method, route, status });
+    httpConnectionsActive.dec();
+  });
+
+  next();
+});
+
+// Update connection metrics periodically
+setInterval(() => {
+  // Simulate idle connections (in a real app, this would track actual connections)
+  const totalConnections = 10; // Mock value
+  const activeConnections = Math.floor(Math.random() * 5);
+  httpConnectionsIdle.set(totalConnections - activeConnections);
+
+  // Set health check status
+  serviceHealthCheck.set({ endpoint: '/health' }, 1);
+  serviceHealthCheck.set({ endpoint: '/metrics' }, 1);
+}, 5000);
+
 // Metrics endpoint
 app.get('/metrics', async (req, res) => {
   try {
@@ -157,12 +233,18 @@ app.get('/metrics', async (req, res) => {
     res.end(metrics);
   } catch (error) {
     res.status(500).end(error.message);
+    applicationErrorsTotal.inc({ type: 'metrics_endpoint_error' });
   }
 });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+  try {
+    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+  } catch (error) {
+    applicationErrorsTotal.inc({ type: 'health_check_error' });
+    res.status(500).json({ status: 'unhealthy', error: error.message });
+  }
 });
 
 // Root endpoint

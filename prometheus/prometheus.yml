@@ -23,7 +23,7 @@ scrape_configs:
 
   - job_name: 'node-exporter'
     static_configs:
-      - targets: ['monitoring-node-exporter:9100']
+      - targets: ['node-exporter:9100']
         labels:
           tier: 'infrastructure'
           service: 'node-exporter'
@@ -31,14 +31,21 @@ scrape_configs:
 
   - job_name: 'cadvisor'
     static_configs:
-      - targets: ['monitoring-cadvisor:8080']
+      - targets: ['cadvisor:8080']
         labels:
           tier: 'containers'
           service: 'cadvisor'
 
   - job_name: 'grafana'
     static_configs:
-      - targets: ['monitoring-grafana:3000']
+      - targets: ['grafana:3000']
         labels:
           tier: 'monitoring'
           service: 'grafana'
+
+  - job_name: 'npm-exporter'
+    static_configs:
+      - targets: ['npm-exporter:9101']
+        labels:
+          tier: 'application'
+          service: 'npm-exporter'

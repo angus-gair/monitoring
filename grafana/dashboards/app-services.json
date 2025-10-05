@@ -936,7 +936,7 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "nodejs_active_requests{job=~\"$service\",instance=~\"$instance\"}",
+          "expr": "nodejs_active_requests_total{job=~\"$service\",instance=~\"$instance\"}",
           "legendFormat": "{{instance}} - Active Requests",
           "refId": "C"
         }
