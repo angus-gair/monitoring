@@ -11,8 +11,14 @@ WORKDIR /usr/src/app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies. Prefer a clean install when a lockfile exists, otherwise
+# fall back to `npm install --production` to avoid CI failing when no lockfile
+# is present in the repo.
+RUN if [ -f package-lock.json ]; then \
+      npm ci --only=production; \
+    else \
+      npm install --production; \
+    fi
 
 # Copy application code
 COPY . .

@@ -12,23 +12,17 @@ Complete monitoring solution using Prometheus, Grafana, Node Exporter, cAdvisor,
 - **Alertmanager**: Alert routing and management
 
 ## Quick Start
-
 ### Prerequisites
 
 - Docker 20.10+
-- Docker Compose 2.0+
 - 4GB RAM minimum
 - 10GB disk space
-
 ### Installation
 
-1. Clone or navigate to the monitoring directory:
 ```bash
 cd /home/thunder/projects/monitoring
-```
 
 2. Configure environment variables (optional):
-```bash
 cp .env.example .env
 # Edit .env with your settings
 ```
@@ -37,42 +31,21 @@ cp .env.example .env
 ```bash
 docker-compose up -d
 ```
+Access dashboards in Grafana at: http://localhost:3001/dashboards
 
 4. Verify services are running:
 ```bash
 docker-compose ps
-```
-
-## Accessing Services
-
-- **Grafana**: http://localhost:3000
   - Default credentials: admin/admin123
   - Change password on first login
-
-- **Prometheus**: http://localhost:9090
-  - Query interface and target status
-
-- **Alertmanager**: http://localhost:9093
   - Alert management interface
-
-- **Node Exporter**: http://localhost:9100/metrics
-  - System metrics endpoint
-
-- **cAdvisor**: http://localhost:8080
-  - Container metrics UI
 
 - **NPM Exporter**: http://localhost:9101/metrics
   - Custom NPM/Node.js metrics
 
 ## Pre-configured Dashboards
 
-1. **System Overview** - CPU, memory, disk, network metrics
-2. **Docker Containers** - Container resource usage and health
-
-Access dashboards in Grafana at: http://localhost:3000/dashboards
-
 ## Metrics Collected
-
 ### System Metrics (Node Exporter)
 - CPU usage and load
 - Memory usage and swap
@@ -117,16 +90,8 @@ Configure alerting channels in:
 ### Start services
 ```bash
 docker-compose up -d
-```
-
-### Stop services
-```bash
 docker-compose down
 ```
-
-### View logs
-```bash
-docker-compose logs -f [service-name]
 ```
 
 ### Restart a service
@@ -154,10 +119,6 @@ docker-compose down -v
 ### Grafana
 - `grafana/provisioning/datasources/` - Data source configs
 - `grafana/provisioning/dashboards/` - Dashboard provisioning
-- `grafana/dashboards/` - Dashboard JSON files
-
-### Exporters
-- `exporters/npm-exporter/` - Custom NPM exporter source
 
 ## Troubleshooting
 
