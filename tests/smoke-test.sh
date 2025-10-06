@@ -12,10 +12,19 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-PROMETHEUS_URL="http://localhost:9090"
-GRAFANA_URL="http://localhost:3000"
+# Allow overriding URLs via environment variables. Defaults match docker-compose host
+# port mappings (Prometheus -> 9091, Grafana -> 3001).
+if [ -f "$(dirname "$0")/../.env" ]; then
+    # shellcheck disable=SC1090
+    source "$(dirname "$0")/../.env"
+fi
+
+PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9091}"
+GRAFANA_URL="${GRAFANA_URL:-http://localhost:3001}"
 NODE_EXPORTER_URL="http://localhost:9100"
 TIMEOUT=5
+GRAFANA_USER="${GRAFANA_USER:-admin}"
+GRAFANA_PASSWORD="${GRAFANA_PASSWORD:-admin123}"
 
 # Helper functions
 log_info() {
@@ -86,8 +95,8 @@ echo ""
 # Check Grafana
 log_info "Checking Grafana..."
 if check_service "$GRAFANA_URL/api/health" "Grafana health endpoint"; then
-    # Check if datasource is configured
-    if curl -s -f -m $TIMEOUT "$GRAFANA_URL/api/datasources" | grep -q "prometheus"; then
+    # Check if datasource is configured (authenticated API)
+    if curl -s -f -m $TIMEOUT -u "$GRAFANA_USER:$GRAFANA_PASSWORD" "$GRAFANA_URL/api/datasources" | grep -qi "prometheus"; then
         log_ok "Grafana datasource configured"
     else
         log_fail "Grafana datasource not configured"
@@ -127,7 +136,7 @@ echo ""
 
 # Check dashboard rendering (basic check)
 log_info "Checking dashboard availability..."
-DASHBOARDS=$(curl -s -m $TIMEOUT "$GRAFANA_URL/api/search?type=dash-db" 2>/dev/null | grep -c "dash-db" || true)
+DASHBOARDS=$(curl -s -m $TIMEOUT -u "$GRAFANA_USER:$GRAFANA_PASSWORD" "$GRAFANA_URL/api/search?type=dash-db" 2>/dev/null | grep -c "dash-db" || true)
 if [ "$DASHBOARDS" -gt 0 ]; then
     log_ok "$DASHBOARDS dashboard(s) available"
 else
