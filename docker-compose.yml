@@ -42,6 +42,18 @@ services:
       - "3001:3000"
     networks:
       - monitoring
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.monitoring-grafana-http.rule=Host(`mon.ajinsights.com.au`)"
+      - "traefik.http.routers.monitoring-grafana-http.entrypoints=web"
+      - "traefik.http.routers.monitoring-grafana-http.middlewares=redirect-to-https@file"
+      - "traefik.http.routers.monitoring-grafana.rule=Host(`mon.ajinsights.com.au`)"
+      - "traefik.http.routers.monitoring-grafana.entrypoints=websecure"
+      - "traefik.http.routers.monitoring-grafana.tls=true"
+      - "traefik.http.routers.monitoring-grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.monitoring-grafana.loadbalancer.server.port=3000"
+      - "traefik.docker.network=dokploy-network"
     depends_on:
       - prometheus
 
@@ -116,6 +128,9 @@ services:
 networks:
   monitoring:
     driver: bridge
+  coolify:
+    name: dokploy-network
+    external: true
 
 volumes:
   prometheus_data:

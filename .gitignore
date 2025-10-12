@@ -38,3 +38,4 @@ Thumbs.db
 # Node modules (for npm-exporter development)
 exporters/npm-exporter/node_modules/
 exporters/npm-exporter/package-lock.json
+.hive-mind/
